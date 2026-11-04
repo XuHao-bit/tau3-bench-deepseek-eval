@@ -41,6 +41,13 @@ is_final_chunk: True
 
 约 744 MB 的 `artifacts/`（每次 LLM 请求的 verbose debug）没有放入仓库；它可由 `--verbose-logs --llm-log-mode all` 重新生成，不影响从 `results.json.gz` 复核分数。
 
+校验：
+
+```bash
+cd releases/banking_full_dsv4_max_user_low
+shasum -a 256 -c SHA256SUMS
+```
+
 ## 复现
 
 要求：macOS/Linux、Python >= 3.12、可用的 OpenAI-compatible endpoint，以及：
