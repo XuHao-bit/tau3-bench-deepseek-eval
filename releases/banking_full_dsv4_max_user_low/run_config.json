@@ -1,0 +1,47 @@
+{
+  "arm": "A",
+  "run_name": "banking_full_dsv4_max_user_low",
+  "result_timestamp": "2026-11-04T16:03:11.701999",
+  "benchmark": {
+    "repo": "sierra-research/tau2-bench",
+    "tag": "v1.0.1",
+    "commit": "fc0055dc4e0a316c3f83133267fbd6faaa770992",
+    "domain": "banking_knowledge",
+    "retrieval_config": "alltools",
+    "task_count": 97
+  },
+  "agent": {
+    "implementation": "llm_agent",
+    "model": "openai/deepseek-v4.1-flash-1017",
+    "llm_args": {
+      "temperature": 0.0,
+      "extra_body": {
+        "reasoning_effort": "max"
+      }
+    }
+  },
+  "user_simulator": {
+    "implementation": "user_simulator",
+    "model": "openai/gpt-5.2",
+    "llm_args": {
+      "extra_body": {
+        "reasoning_effort": "low"
+      }
+    }
+  },
+  "runtime": {
+    "num_trials": 1,
+    "seed": 300,
+    "trial_seed": 626729,
+    "max_steps": 200,
+    "max_errors": 10,
+    "max_concurrency": 8,
+    "max_retries": 1,
+    "command": "./run_banking_official.sh"
+  },
+  "notes": [
+    "One complete pass over all 97 banking_knowledge tasks; not the official 4-trial leaderboard protocol.",
+    "The original run used a private OpenAI-compatible gateway. Exact reproduction requires access to the same model IDs and serving configuration.",
+    "Costs are the values recorded by LiteLLM; verify them against the actual provider bill."
+  ]
+}

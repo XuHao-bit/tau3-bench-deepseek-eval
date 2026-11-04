@@ -1,0 +1,19 @@
+# upstream checkout and local environment
+tau2-bench/
+.venv/
+.cache/
+.tools/
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# Python and OS files
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# local run outputs
+runs/
+local_memos/

@@ -1,0 +1,57 @@
+diff --git a/src/tau2/config.py b/src/tau2/config.py
+index d8a8ace..b27f763 100644
+--- a/src/tau2/config.py
++++ b/src/tau2/config.py
+@@ -21,7 +21,8 @@ DEFAULT_LLM_TEMPERATURE_USER = 0.0
+ DEFAULT_LLM_ARGS_AGENT = {"temperature": DEFAULT_LLM_TEMPERATURE_AGENT}
+ DEFAULT_LLM_ARGS_USER = {"temperature": DEFAULT_LLM_TEMPERATURE_USER}
+ 
+-DEFAULT_LLM_NL_ASSERTIONS = "gpt-4.1-2025-04-14"
++# DEFAULT_LLM_NL_ASSERTIONS = "gpt-4.1-2025-04-14"
++DEFAULT_LLM_NL_ASSERTIONS = "openai/gpt-5.2"
+ DEFAULT_LLM_NL_ASSERTIONS_TEMPERATURE = 0.0
+ DEFAULT_LLM_NL_ASSERTIONS_ARGS = {"temperature": DEFAULT_LLM_NL_ASSERTIONS_TEMPERATURE}
+ 
+diff --git a/src/tau2/knowledge/embedders/openai_embedder.py b/src/tau2/knowledge/embedders/openai_embedder.py
+index 4f8cb46..36eedd2 100644
+--- a/src/tau2/knowledge/embedders/openai_embedder.py
++++ b/src/tau2/knowledge/embedders/openai_embedder.py
+@@ -24,7 +24,11 @@ class OpenAIEmbedder(BaseEmbedder):
+             api_key: OpenAI API key (if None, will use OPENAI_API_KEY env var)
+         """
+         self.model = model
+-        self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
++        base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE")
++        self.client = OpenAI(
++            api_key=api_key or os.getenv("OPENAI_API_KEY"),
++            base_url=base_url,
++        )
+ 
+     def embed(self, texts: List[str]) -> np.ndarray:
+         """
+diff --git a/src/tau2/utils/llm_utils.py b/src/tau2/utils/llm_utils.py
+index e9d8156..763494a 100644
+--- a/src/tau2/utils/llm_utils.py
++++ b/src/tau2/utils/llm_utils.py
+@@ -48,6 +48,21 @@ warnings.filterwarnings(
+     category=UserWarning,
+ )
+ 
++import litellm
++
++_DSV4_COST = {
++    "input_cost_per_token": 2.8e-7,
++    "output_cost_per_token": 1.14e-6,
++    "max_tokens": 8192,
++    "litellm_provider": "openai",
++    "mode": "chat",
++}
++
++litellm.register_model({
++    "deepseek-v4.1-flash-1017": dict(_DSV4_COST),
++    "deepseek-v4-1-flash-261017": dict(_DSV4_COST),
++})
++
+ # Configure httpx connection limits for LiteLLM
+ httpx_limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
+ litellm.client_session = httpx.Client(limits=httpx_limits)

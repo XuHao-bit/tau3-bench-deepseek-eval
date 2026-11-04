@@ -1,0 +1,68 @@
+{
+  "result_timestamp": "2026-11-04T16:03:11.701999",
+  "task_count": 97,
+  "simulation_count": 97,
+  "num_trials": 1,
+  "seed": 300,
+  "trial_seed": 626729,
+  "max_steps": 200,
+  "max_errors": 10,
+  "retrieval_config": "alltools",
+  "agent": {
+    "implementation": "llm_agent",
+    "llm": "openai/deepseek-v4.1-flash-1017",
+    "llm_args": {
+      "temperature": 0.0,
+      "extra_body": {
+        "reasoning_effort": "max"
+      }
+    },
+    "voice_settings": null
+  },
+  "user_simulator": {
+    "llm": "openai/gpt-5.2",
+    "llm_args": {
+      "extra_body": {
+        "reasoning_effort": "low"
+      }
+    }
+  },
+  "reward_counts": {
+    "0.0": 50,
+    "1.0": 46,
+    "null": 1
+  },
+  "rewarded_count": 46,
+  "valid_count": 96,
+  "pass_at_1_all_tasks": 0.4742268041237113,
+  "pass_at_1_valid_tasks": 0.4791666666666667,
+  "mean_trial_reward": 0.4742268041237113,
+  "termination_reason_counts": {
+    "infrastructure_error": 1,
+    "user_stop": 96
+  },
+  "reward_basis_counts": {
+    "": 1,
+    "ACTION": 9,
+    "DB": 86,
+    "DB|NL_ASSERTION": 1
+  },
+  "duration_seconds": {
+    "mean": 305.7131371876906,
+    "max": 1215.2402300419926,
+    "sum": 29654.17430720599
+  },
+  "cost": {
+    "agent_cost_sum": 8.24645778,
+    "user_cost_sum": 3.02886675,
+    "total_cost_sum": 11.27532453
+  },
+  "errors": [
+    {
+      "task_id": "task_018",
+      "termination_reason": "infrastructure_error",
+      "error_type": "ValueError",
+      "error": "UserMessage must have either content or tool_calls. Got UserMessage\nis_final_chunk: True"
+    }
+  ]
+}
