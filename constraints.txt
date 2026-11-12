@@ -1,0 +1,6 @@
+# 与已运行的 benchmark 环境保持关键客户端版本一致。
+litellm==1.82.6
+openai==3.42.1
+pydantic==2.14.2
+httpx==0.28.1
+tiktoken==0.14.0

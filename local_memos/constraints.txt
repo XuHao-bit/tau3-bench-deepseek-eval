@@ -1,0 +1,10 @@
+# 与主仓库 Docker 的分块器版本一致，避免新版额外 tokenizer 下载路径。
+chonkie==1.1.0
+jieba==0.42.1
+tiktoken==0.14.0
+
+# 已运行的本地 MemOS 关键依赖；与 benchmark 使用独立虚拟环境。
+openai==1.109.1
+pydantic==2.14.2
+httpx==0.28.1
+alibabacloud-oss-v2==1.4.1

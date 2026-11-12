@@ -1,0 +1,111 @@
+diff --git a/src/tau2/user/user_simulator.py b/src/tau2/user/user_simulator.py
+index 51ef4bb..c9d73e9 100644
+--- a/src/tau2/user/user_simulator.py
++++ b/src/tau2/user/user_simulator.py
+@@ -1,3 +1,4 @@
++import time
+ from typing import Generic, Optional, Tuple, TypeVar
+ 
+ from loguru import logger
+@@ -96,6 +97,10 @@ SYSTEM_PROMPT = """
+ UserStateType = TypeVar("UserStateType", bound="UserState")
+ 
+ 
++class EmptyUserResponseError(RuntimeError):
++    """用户模型持续返回空响应，由评测器按基础设施异常处理。"""
++
++
+ class UserSimulator(
+     LLMConfigMixin, HalfDuplexUser[UserStateType], Generic[UserStateType]
+ ):
+@@ -126,6 +131,10 @@ class UserSimulator(
+             llm_args=llm_args,
+         )
+         self.persona_config = persona_config or PersonaConfig()
++        # 评测器选项不传给模型 API；次数指首次请求以外的重试。
++        self.empty_response_retries = self.llm_args.pop("empty_response_retries", 2)
++        if type(self.empty_response_retries) is not int or self.empty_response_retries < 0:
++            raise ValueError("empty_response_retries 必须是非负整数")
+ 
+     @property
+     def global_simulation_guidelines(self) -> str:
+@@ -231,14 +240,49 @@ class UserSimulator(
+             state.messages.append(message)
+         messages = state.system_messages + state.flip_roles()
+ 
+-        # Generate response
+-        assistant_message = generate(
+-            model=self.llm,
+-            messages=messages,
+-            tools=self.tools,
+-            call_name="user_simulator_response",
+-            **self.llm_args,
+-        )
++        # 只重发当前请求，不重复添加输入，也不执行模型返回的工具。
++        for attempt in range(self.empty_response_retries + 1):
++            assistant_message = generate(
++                model=self.llm,
++                messages=messages,
++                tools=self.tools,
++                call_name="user_simulator_response",
++                **self.llm_args,
++            )
++            if assistant_message.has_content() or assistant_message.tool_calls:
++                break
++            state.pending_empty_responses.append({
++                "cost": assistant_message.cost,
++                "usage": assistant_message.usage,
++                "raw_data": assistant_message.raw_data,
++                "generation_time_seconds": assistant_message.generation_time_seconds,
++            })
++            logger.warning(
++                "用户模型空回复：请求 {}/{}，cost={}，usage={}",
++                attempt + 1, self.empty_response_retries + 1,
++                assistant_message.cost, assistant_message.usage,
++            )
++            if attempt == self.empty_response_retries:
++                raise EmptyUserResponseError(
++                    f"用户模型连续 {attempt + 1} 次回复无文字且无工具调用"
++                )
++            time.sleep(attempt + 1)
++
++        if state.pending_empty_responses:
++            # 原始响应的 usage 保持原样；消息级开销包含本轮所有请求。
++            retries = state.pending_empty_responses
++            assistant_message.raw_data = {
++                **(assistant_message.raw_data or {}), "empty_response_retries": retries,
++            }
++            costs = [item["cost"] for item in retries] + [assistant_message.cost]
++            assistant_message.cost = sum(costs) if all(c is not None for c in costs) else None
++            usages = [item["usage"] for item in retries] + [assistant_message.usage]
++            assistant_message.usage = (
++                {key: sum(usage.get(key, 0) or 0 for usage in usages)
++                 for key in ("prompt_tokens", "completion_tokens")}
++                if all(usage is not None for usage in usages) else None
++            )
++            state.pending_empty_responses = []
+ 
+         user_response = assistant_message.content
+         logger.debug(f"Response: {user_response}")
+diff --git a/src/tau2/user/user_simulator_base.py b/src/tau2/user/user_simulator_base.py
+index 1daa1f6..3ba3c83 100644
+--- a/src/tau2/user/user_simulator_base.py
++++ b/src/tau2/user/user_simulator_base.py
+@@ -9,7 +9,7 @@ This module defines user-specific base classes for both protocols:
+ from abc import ABC
+ from typing import Generic, Optional, TypeVar
+ 
+-from pydantic import BaseModel
++from pydantic import BaseModel, Field
+ 
+ from tau2.agent.base.participant import (
+     FullDuplexParticipant,
+@@ -58,6 +58,8 @@ class UserState(BaseModel):
+ 
+     system_messages: list[SystemMessage]
+     messages: list[APICompatibleMessage]
++    # 尚未得到有效回复的空响应开销，不进入对话历史。
++    pending_empty_responses: list[dict] = Field(default_factory=list)
+ 
+     def flip_roles(self) -> list[APICompatibleMessage]:
+         """

@@ -16,4 +16,12 @@ __pycache__/
 
 # local run outputs
 runs/
-local_memos/
+
+# 本地 MemOS 源码与运行状态
+MemOS/
+local_memos/.venv/
+local_memos/runtime/
+local_memos/runtime_skills/
+local_memos/downloads/
+.memos/
+.pytest_cache/
